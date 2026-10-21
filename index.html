@@ -29,7 +29,7 @@ header{
 .btn-thin{color:#90a4ae;font-size:13px;padding:6px 10px}
 
 main{
-  flex:1;display:grid;grid-template-columns:1fr 420px;grid-template-rows:1.42fr 1fr;
+  flex:1;display:grid;grid-template-columns:1fr 420px;grid-template-rows:1.15fr 1fr;
   gap:12px;padding:10px 12px 12px;min-height:0;
 }
 .card{background:#ffffff;border-radius:15px;box-shadow:0 8px 25px rgba(0,0,0,.08);padding:8px 12px;
@@ -656,9 +656,26 @@ window.MM6 = window.MM6 || {};
 'use strict';
 var P = NS.PHY;
 
-var RED = '#c0392b', RED_D = '#8e2a1f', BLUE = '#297fb8', ORANGE = '#e67e22', INK = '#2c3e50', GREY = '#90a4ae';
+var RED = '#c0392b', RED_D = '#8e2a1f', BLUE = '#297fb8', INK = '#2c3e50', GREY = '#9aa8b4';
 
-var XA = 96, XB = 848, YT = 118, YB = 330, YM = 224;
+var BR = [
+{ id: 'mA1', lab: '1 mA', kind: 'I' },
+{ id: 'mA10', lab: '10 mA', kind: 'I' },
+{ id: 'mA100', lab: '100 mA', kind: 'I' },
+{ id: 'V2V5', lab: '2.5 V', kind: 'V' },
+{ id: 'V10', lab: '10 V', kind: 'V' },
+{ id: 'V50', lab: '50 V', kind: 'V' },
+{ id: 'V250', lab: '250 V', kind: 'V' },
+{ id: 'Rx1', lab: '×1', kind: 'R' },
+{ id: 'Rx10', lab: '×10', kind: 'R' },
+{ id: 'Rx100', lab: '×100', kind: 'R' },
+{ id: 'Rx1k', lab: '×1k', kind: 'R' }
+];
+
+const X = [72, 176, 280, 356, 432, 508, 584, 664, 740, 812, 880];
+var Y_DOT = 250, Y_ELEM = 192, Y_BUS = 158;
+var KX = 476, KY = 336, BY = 386;
+var BOX = { x: 20, y: 12, w: 300, h: 138 };
 
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 function fmtR(v) {
@@ -668,147 +685,120 @@ if (v >= 100) return v.toFixed(0) + ' Ω';
 if (v >= 10) return v.toFixed(1) + ' Ω';
 return v.toFixed(2) + ' Ω';
 }
-
-function wire(d, w) { return '<path d="' + d + '" fill="none" stroke="' + RED + '" stroke-width="' + (w || 2.3) + '" stroke-linecap="round"/>'; }
-
-function resBox(cx, cy, w, label, val, on) {
-var h = 30;
-var c = on ? RED : BLUE;
-var s = '<rect x="' + (cx - w / 2) + '" y="' + (cy - h / 2) + '" width="' + w + '" height="' + h + '" rx="2" fill="#ffffff" stroke="' + c + '" stroke-width="' + (on ? 2.4 : 1.8) + '"/>';
-s += '<text x="' + cx + '" y="' + (cy - h / 2 - 8) + '" fill="' + INK + '" font-size="12" font-weight="700" text-anchor="middle">' + esc(label) + '</text>';
-s += '<text x="' + cx + '" y="' + (cy + h / 2 + 17) + '" fill="' + (on ? RED : BLUE) + '" font-size="13.5" font-weight="800" text-anchor="middle">' + esc(val) + '</text>';
-return s;
+function wire(d, w, c) {
+return '<path d="' + d + '" fill="none" stroke="' + (c || RED) + '" stroke-width="' + (w || 2.1) + '" stroke-linecap="round"/>';
 }
-
 function meter(cx, cy) {
-return '<circle cx="' + cx + '" cy="' + cy + '" r="25" fill="#ffffff" stroke="' + RED + '" stroke-width="2.4"/>' +
-'<path d="M' + cx + ' ' + (cy + 11) + 'V' + (cy - 10) + 'M' + (cx - 7) + ' ' + (cy - 3) + 'L' + cx + ' ' + (cy - 10) + 'L' + (cx + 7) + ' ' + (cy - 3) +
-'" fill="none" stroke="' + RED + '" stroke-width="2.2" stroke-linecap="round"/>' +
-'<text x="' + cx + '" y="' + (cy + 45) + '" fill="' + GREY + '" font-size="11" text-anchor="middle">Ig=100μA</text>' +
-'<text x="' + cx + '" y="' + (cy + 59) + '" fill="' + GREY + '" font-size="11" text-anchor="middle">Rg=1kΩ</text>';
+return '<circle cx="' + cx + '" cy="' + cy + '" r="21" fill="#ffffff" stroke="' + RED + '" stroke-width="2.2"/>' +
+'<path d="M' + cx + ' ' + (cy + 10) + 'V' + (cy - 9) + 'M' + (cx - 6) + ' ' + (cy - 2) + 'L' + cx + ' ' + (cy - 9) + 'L' + (cx + 6) + ' ' + (cy - 2) +
+'" fill="none" stroke="' + RED + '" stroke-width="2" stroke-linecap="round"/>';
 }
-
-function cellH(cx, cy, label, val) {
-var s = '<path d="M' + (cx - 6) + ' ' + (cy - 15) + 'v30" stroke="' + RED + '" stroke-width="3"/>';
-s += '<path d="M' + (cx + 7) + ' ' + (cy - 8) + 'v16" stroke="' + RED + '" stroke-width="3"/>';
-s += '<text x="' + cx + '" y="' + (cy - 24) + '" fill="' + INK + '" font-size="12" font-weight="700" text-anchor="middle">' + esc(label) + '</text>';
-if (val) s += '<text x="' + cx + '" y="' + (cy + 30) + '" fill="' + BLUE + '" font-size="13" font-weight="800" text-anchor="middle">' + esc(val) + '</text>';
+function box(cx, cy, w, h, on, label, val) {
+var c = on ? RED : '#b9c6d1';
+var s = '<rect x="' + (cx - w / 2) + '" y="' + (cy - h / 2) + '" width="' + w + '" height="' + h + '" rx="2" fill="' + (on ? '#fdf1ef' : '#ffffff') +
+'" stroke="' + c + '" stroke-width="' + (on ? 2.2 : 1.5) + '"/>';
+if (label) s += '<text x="' + cx + '" y="' + (cy + 4) + '" fill="' + (on ? RED : GREY) + '" font-size="10" font-weight="800" text-anchor="middle">' + esc(label) + '</text>';
+if (val) s += '<text x="' + cx + '" y="' + (cy + h / 2 + 13) + '" fill="' + (on ? RED : GREY) + '" font-size="10" font-weight="800" text-anchor="middle">' + esc(val) + '</text>';
 return s;
 }
-
-function dut(scene, p, on) {
-var s = '';
-var U = (p && p.U != null) ? p.U : 1.5;
-var RX = (p && p.Rx != null) ? p.Rx : 1200;
-if (scene === 'battery') {
-s += cellH(470, YB, '被测电池', U.toFixed(2) + ' V');
-s += '<text x="470" y="' + (YB + 46) + '" fill="' + GREY + '" font-size="11.5" text-anchor="middle">红笔接 +，黑笔接 −</text>';
-} else if (scene === 'resistor') {
-s += resBox(470, YB, 150, '被测电阻 Rx', fmtR(RX), true);
-} else if (scene === 'diode') {
-s += '<path d="M' + 430 + ' ' + (YB - 16) + 'l40 16-40 16z" fill="#eaf4fc" stroke="#2c3e50" stroke-width="2.2"/>';
-s += '<path d="M470 ' + (YB - 16) + 'v32" stroke="#2c3e50" stroke-width="3"/>';
-s += '<text x="470" y="' + (YB - 26) + '" fill="' + INK + '" font-size="12" font-weight="700" text-anchor="middle">二极管</text>';
-s += '<text x="405" y="' + (YB + 4) + '" fill="#c0392b" font-size="11" text-anchor="end">正极</text>';
-s += '<text x="500" y="' + (YB + 4) + '" fill="' + INK + '" font-size="11">负极</text>';
-} else {
-
-s += cellH(330, YB, '电源', U.toFixed(2) + ' V');
-s += '<circle cx="600" cy="' + YB + '" r="20" fill="#fef9e7" stroke="' + ORANGE + '" stroke-width="2.4"/>';
-s += '<path d="M590 ' + (YB - 10) + 'l20 20M610 ' + (YB - 10) + 'l-20 20" stroke="' + ORANGE + '" stroke-width="2"/>';
-s += '<text x="600" y="' + (YB - 28) + '" fill="' + ORANGE + '" font-size="12" font-weight="700" text-anchor="middle">小灯泡 39Ω</text>';
-}
-return s;
+function cellH(cx, cy, on) {
+var c = on ? RED : '#b9c6d1';
+return '<path d="M' + (cx - 6) + ' ' + (cy - 13) + 'v26" stroke="' + c + '" stroke-width="2.8"/>' +
+'<path d="M' + (cx + 7) + ' ' + (cy - 7) + 'v14" stroke="' + c + '" stroke-width="2.8"/>';
 }
 
-function lowerWire(scene) {
-
-return wire('M' + XA + ' ' + YM + 'V' + YB + 'H' + (scene === 'loop' ? 290 : 380));
-}
-function lowerWire2(scene) {
-var x2 = (scene === 'loop') ? 650 : 560;
-return wire('M' + x2 + ' ' + YB + 'H' + XB + 'V' + YM);
-}
-
-function inner(g, gearId, p) {
-var s = '';
-if (g.fam === 'I') {
-
-var Rsh = P.params(gearId).Rsh;
-var w = Math.max(70, Math.min(230, 60 + 55 * Math.log10(Rsh)));
-s += wire('M' + (XA + 10) + ' ' + YT + 'H' + (470 - w / 2));
-s += resBox(470, YT, w, '分流电阻 Rsh', fmtR(Rsh), true);
-s += wire('M' + (470 + w / 2) + ' ' + YT + 'H' + (XB - 10));
-
-s += wire('M' + 300 + ' ' + YT + 'V' + (YT + 66) + 'H' + 440);
-s += meter(470, YT + 66);
-s += wire('M' + 500 + ' ' + (YT + 66) + 'H' + 640 + 'V' + YT);
-s += '<circle cx="300" cy="' + YT + '" r="3.5" fill="' + RED + '"/>';
-s += '<circle cx="640" cy="' + YT + '" r="3.5" fill="' + RED + '"/>';
-} else if (g.fam === 'V') {
-var Rser = P.params(gearId).Rser;
-var w2 = Math.max(90, Math.min(300, 90 + 62 * Math.log10(Rser / 24000 + 1) + 25));
-w2 = Math.min(300, 90 + 70 * (Math.log10(Rser) - 4));
-s += wire('M' + (XA + 10) + ' ' + YT + 'H' + (400 - w2 / 2));
-s += resBox(400, YT, w2, '串联分压电阻 Rser', fmtR(Rser), true);
-s += wire('M' + (400 + w2 / 2) + ' ' + YT + 'H' + 640);
-s += meter(690, YT);
-s += wire('M' + 715 + ' ' + YT + 'H' + (XB - 10));
-} else {
-var mid = P.params(gearId).mid;
-s += cellH(220, YT, '内部电池 E', '1.5 V');
-s += wire('M' + (XA + 10) + ' ' + YT + 'H' + 200);
-s += wire('M' + 234 + ' ' + YT + 'H' + 300);
-s += resBox(370, YT, 120, '调零电阻 R调', '可调', true);
-s += wire('M' + 430 + ' ' + YT + 'H' + 560);
-s += meter(610, YT);
-s += wire('M' + 635 + ' ' + YT + 'H' + (XB - 10));
-s += '<text x="370" y="' + (YT + 46) + '" fill="' + BLUE + '" font-size="12" font-weight="700" text-anchor="middle">中值 R内 = ' + fmtR(mid) + '</text>';
-}
-return s;
-}
-
-function build(gearId, scene, p) {
+function build(gearId, scene) {
+var gi = -1, i;
+for (i = 0; i < BR.length; i++) if (BR[i].id === gearId) gi = i;
 var g = P.GEARS[gearId];
 var s = '';
 
-s += '<circle cx="' + XA + '" cy="' + YM + '" r="10" fill="#c0392b"/>';
-s += '<text x="' + XA + '" y="' + (YM + 34) + '" fill="#c0392b" font-size="18" font-weight="800" text-anchor="middle">A</text>';
-s += '<text x="' + XA + '" y="' + (YM - 24) + '" fill="#c0392b" font-size="11" text-anchor="middle">红表笔</text>';
-s += '<circle cx="' + XB + '" cy="' + YM + '" r="10" fill="#2c3e50"/>';
-s += '<text x="' + XB + '" y="' + (YM + 34) + '" fill="#2c3e50" font-size="18" font-weight="800" text-anchor="middle">B</text>';
-s += '<text x="' + XB + '" y="' + (YM - 24) + '" fill="#2c3e50" font-size="11" text-anchor="middle">黑表笔</text>';
+s += '<rect x="' + BOX.x + '" y="' + BOX.y + '" width="' + BOX.w + '" height="' + BOX.h + '" rx="5" fill="#eef6fd" stroke="#8fc0e8" stroke-width="1.7" stroke-dasharray="8 5"/>';
+s += meter(160, 50);
+s += wire('M139 50H60V96', 2);
+s += wire('M181 50H260V96', 2);
+s += wire('M60 96H82', 2);
+s += '<rect x="82" y="86" width="52" height="20" fill="#ffffff" stroke="' + BLUE + '" stroke-width="1.6"/>';
+s += '<text x="108" y="100" fill="' + BLUE + '" font-size="10" font-weight="700" text-anchor="middle">R1</text>';
+s += wire('M134 96H186', 2);
+s += '<rect x="186" y="86" width="52" height="20" fill="#ffffff" stroke="' + BLUE + '" stroke-width="1.6"/>';
+s += '<text x="212" y="100" fill="' + BLUE + '" font-size="10" font-weight="700" text-anchor="middle">R2</text>';
+s += wire('M238 96H260', 2);
 
-s += wire('M' + XA + ' ' + YM + 'V' + YT + 'H' + (XA + 10));
-s += wire('M' + (XB - 10) + ' ' + YT + 'V' + YM);
-s += lowerWire(scene);
-s += lowerWire2(scene);
+s += '<circle cx="60" cy="96" r="3.6" fill="' + RED + '"/>';
+s += '<circle cx="160" cy="96" r="3.6" fill="' + RED + '"/>';
+s += '<circle cx="260" cy="96" r="3.6" fill="' + RED + '"/>';
+s += wire('M60 96V' + (Y_DOT - 5), (gi === 0 ? 2.4 : 1.5), gi === 0 ? RED : '#c8d3dc');
+s += wire('M160 96V' + (Y_DOT - 5), (gi === 1 ? 2.4 : 1.5), gi === 1 ? RED : '#c8d3dc');
+s += wire('M260 96V' + (Y_DOT - 5), (gi === 2 ? 2.4 : 1.5), gi === 2 ? RED : '#c8d3dc');
 
-if (!g) {
-s += '<text x="470" y="' + (YM + 10) + '" fill="' + GREY + '" font-size="20" font-weight="700" text-anchor="middle">旋钮在 OFF：表头没有接入电路</text>';
-s += dut(scene, p, false);
-return s;
+s += wire('M60 96V' + (KY - 34), 2.2);
+s += '<path d="M60 ' + (KY - 34) + 'v26" stroke="' + RED_D + '" stroke-width="9" stroke-linecap="round"/>';
+s += '<path d="M60 ' + (KY - 34) + 'v26" stroke="' + RED + '" stroke-width="5" stroke-linecap="round"/>';
+s += '<circle cx="60" cy="' + (KY - 8) + '" r="4.5" fill="' + RED + '"/>';
+s += '<text x="60" y="' + (KY + 20) + '" fill="' + RED + '" font-size="17" font-weight="800" text-anchor="middle">A</text>';
+
+s += wire('M260 96V' + Y_BUS + 'H870', 2.4);
+
+BR.forEach(function (b, k) {
+if (k < 3) return;
+var x = X[k], on = (k === gi);
+var c = on ? RED : '#c8d3dc';
+s += wire('M' + x + ' ' + Y_BUS + 'V' + (Y_ELEM - (b.kind === 'R' ? 13 : 14)), on ? 2.4 : 1.5, c);
+if (b.kind === 'V') {
+var rser = P.params(b.id).Rser;
+var w2 = Math.max(38, Math.min(96, 28 + 17 * (Math.log10(rser) - 4)));
+s += box(x, Y_ELEM, w2, 26, on, on ? fmtR(rser) : '', '');
+if (!on) s += '<text x="' + x + '" y="' + (Y_ELEM + 4) + '" fill="' + '#c8d3dc' + '" font-size="9.5" text-anchor="middle">Rser</text>';
+} else {
+s += cellH(x - 12, Y_ELEM, on);
+s += '<rect x="' + (x - 2) + '" y="' + (Y_ELEM - 9) + '" width="18" height="18" rx="2" fill="none" stroke="' + (on ? RED : '#c8d3dc') + '" stroke-width="1.4"/>';
+s += '<path d="M' + (x + 2) + ' ' + (Y_ELEM + 15) + 'l9 -14" stroke="' + (on ? RED : '#c8d3dc') + '" stroke-width="1.2"/>';
 }
+s += wire('M' + x + ' ' + (Y_ELEM + 14) + 'V' + (Y_DOT - 5), on ? 2.4 : 1.5, c);
+});
 
-s += inner(g, gearId, p);
+BR.forEach(function (b, k) {
+var x = X[k], on = (k === gi);
+var c = on ? RED : '#c8d3dc';
+s += '<circle cx="' + x + '" cy="' + Y_DOT + '" r="' + (on ? 6 : 4) + '" fill="' + (on ? RED : '#ffffff') + '" stroke="' + c + '" stroke-width="' + (on ? 1 : 1.6) + '"/>';
+s += '<text x="' + x + '" y="' + (Y_DOT + 22) + '" fill="' + (on ? RED : GREY) + '" font-size="' + (on ? 12.5 : 10.5) + '" font-weight="' + (on ? 800 : 600) + '" text-anchor="middle">' + (k + 1) + '</text>';
+s += '<text x="' + x + '" y="' + (Y_DOT + 38) + '" fill="' + (on ? RED_D : GREY) + '" font-size="' + (on ? 11 : 9.5) + '" font-weight="' + (on ? 800 : 600) + '" text-anchor="middle">' + b.lab + '</text>';
+});
 
-s += dut(scene, p, true);
+s += '<circle cx="' + KX + '" cy="' + KY + '" r="7.5" fill="' + (gi >= 0 ? RED : '#b9c6d1') + '"/>';
+if (gi >= 0) {
+s += '<path d="M' + KX + ' ' + KY + 'L' + X[gi] + ' ' + (Y_DOT + 7) + '" stroke="' + RED + '" stroke-width="3.2" stroke-linecap="round"/>';
+}
+s += '<text x="' + (KX + 56) + '" y="' + (KY + 20) + '" fill="' + GREY + '" font-size="10.5" font-weight="600">开关 K</text>';
 
-var note = '';
-if (g.fam === 'I') note = '电流表串在回路里：' + fmtR(P.params(gearId).Rsh) + ' 与表头并联分流，表头只走 100 μA';
-else if (g.fam === 'V') note = '电压表并在被测物两端：串进 ' + fmtR(P.params(gearId).Rser) + '，串得越多能测的电压越大';
-else note = '欧姆挡：内部电池供电，' + fmtR(P.params(gearId).mid) + ' 是这一挡的中值电阻';
-s += '<text x="470" y="' + (YM + 46) + '" fill="' + RED_D + '" font-size="13" font-weight="700" text-anchor="middle">' + esc(note) + '</text>';
+s += wire('M' + KX + ' ' + KY + 'V' + (BY - 26), 2.2, INK);
+s += '<path d="M' + KX + ' ' + (BY - 26) + 'v26" stroke="#111111" stroke-width="9" stroke-linecap="round"/>';
+s += '<path d="M' + KX + ' ' + (BY - 26) + 'v26" stroke="#2c3e50" stroke-width="5" stroke-linecap="round"/>';
+s += '<circle cx="' + KX + '" cy="' + BY + '" r="4.5" fill="#2c3e50"/>';
+s += '<text x="' + KX + '" y="' + (BY + 20) + '" fill="' + INK + '" font-size="17" font-weight="800" text-anchor="middle">B</text>';
+
+var txt = '';
+if (!g) txt = '旋钮在 OFF：开关没有接通任何一条路';
+else if (g.fam === 'I') {
+var tap = gi === 0 ? '抽头 1（表头左端）' : (gi === 1 ? '抽头 2（R1 与 R2 之间）' : '抽头 3（表头右端）');
+txt = '电流挡：开关接' + tap + '，接入的分流电阻不同 → 量程 ' + (g.range * 1000) + ' mA';
+} else if (g.fam === 'V') {
+txt = '电压挡：串进 ' + fmtR(P.params(gearId).Rser) + ' → 串得越多，能测的电压越大';
+} else {
+txt = '欧姆挡：内部电池 + 调零电阻，中值 R内 = ' + fmtR(P.params(gearId).mid);
+}
+s += '<text x="960" y="26" fill="' + RED_D + '" font-size="13" font-weight="700" text-anchor="end">' + esc(txt) + '</text>';
 
 return s;
 }
 
 function mount(el) {
-el.innerHTML = '<svg id="cirSvg" viewBox="0 0 940 392" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:100%"><g id="cirBody"></g></svg>';
+el.innerHTML = '<svg id="cirSvg" viewBox="0 0 940 410" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:100%"><g id="cirBody"></g></svg>';
 }
 function render(gearId, scene, p) {
-var g = document.getElementById('cirBody');
-if (g) g.innerHTML = build(gearId, scene, p);
+var el = document.getElementById('cirBody');
+if (el) el.innerHTML = build(gearId, scene, p);
 }
 
 NS.CIRCUIT = { mount: mount, render: render };
