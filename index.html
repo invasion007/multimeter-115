@@ -36,6 +36,7 @@ header{
 .btn-wait{background:#f7fafd;color:#90a4ae;cursor:default}
 .btn-wait:hover{background:#f7fafd;border-color:#dde2e9;color:#90a4ae}
 .btn-mini{padding:5px 12px;font-size:13px;border-radius:8px}
+.btn-thin{padding:6px 10px;font-size:13px;color:#90a4ae}
 
 /* ---------- 主栅格 ---------- */
 main{flex:1;display:grid;grid-template-columns:404px 1fr 404px;gap:12px;padding:10px 12px 12px;min-height:0}
@@ -53,6 +54,7 @@ main{flex:1;display:grid;grid-template-columns:404px 1fr 404px;gap:12px;padding:
 
 /* 中栏 */
 .dial-card{flex:1 1 auto;min-height:0;padding:3px 4px}
+.dial-hint{display:none;font-size:11px;color:#90a4ae;text-align:center;padding:2px 0 0}
 #dialBox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
 .read-card{height:clamp(148px,17vh,182px);flex:0 0 auto;justify-content:center;gap:2px}
 .read-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#90a4ae;font-weight:700}
@@ -118,11 +120,20 @@ main{flex:1;display:grid;grid-template-columns:404px 1fr 404px;gap:12px;padding:
   .pbar{width:90px}
 }
 @media (max-width:760px){
-  header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:8px}
+  header{height:auto;flex-wrap:wrap;padding:8px 10px;gap:6px}
+  .h-left{flex:1 1 100%}
+  .h-mid{flex:0 0 auto;order:2}
+  .h-right{flex:1 1 auto;order:3;justify-content:flex-end;gap:4px}
+  .btn{padding:5px 8px;font-size:12px;border-radius:7px}
+  .h-left b{font-size:15px}
+  .cir-card{overflow-x:auto}
+  #cirSvg{min-width:660px}
   .col:nth-child(2){order:1}
   .col:nth-child(1){order:2}
   .col:nth-child(3){order:3}
-  .dial-card{height:auto}
+  .dial-card{height:auto;overflow-x:auto;overflow-y:hidden}
+  #dialSvg{min-width:720px}
+  .dial-hint{display:block}
   .read-card{height:132px}
   .read-big{font-size:46px}
   .cir-card{height:260px}
@@ -142,7 +153,8 @@ main{flex:1;display:grid;grid-template-columns:404px 1fr 404px;gap:12px;padding:
     <div class="h-right">
       <button id="btnFree" class="btn">自由练习</button>
       <button id="btnQuiz" class="btn">考考我</button>
-      <button id="btnTest" class="btn">自检</button>
+      <button id="btnFull" class="btn">全屏</button>
+      <button id="btnTest" class="btn btn-thin">自检</button>
       <button id="btnReset" class="btn">重置</button>
     </div>
   </header>
@@ -175,7 +187,8 @@ main{flex:1;display:grid;grid-template-columns:404px 1fr 404px;gap:12px;padding:
 
     <!-- 中：表盘 + 读数 + 内部电路 -->
     <section class="col">
-      <div class="card dial-card"><div id="dialBox"></div></div>
+      <div class="card dial-card"><div id="dialBox"></div>
+        <div class="dial-hint">← 左右滑动看完整表盘 →</div></div>
       <div class="card read-card">
         <div class="read-head"><span>读数</span><span id="readTag" class="tag tag-off">OFF</span></div>
         <div id="readBig" class="read-big off">—</div>
@@ -686,11 +699,12 @@ var BRANCHES = [
 { id: 'Rx1k', kind: 'R', label: '×1k', unit: '', elem: 'E + R调', val: '15 kΩ' }
 ];
 
-var Y0 = 26, DY = 24;
+var Y0 = 24, DY = 23;
 function rowY(i) { return Y0 + i * DY; }
 
-var X_A = 28, X_ARM = 70, X_DOT = 118, X_RES0 = 148, X_RES1 = 292, X_BUS = 336;
+var X_A = 26, X_ARM = 72, X_DOT = 122, X_RES0 = 150, X_RES1 = 294, X_BUS = 338;
 var X_P = 452, X_G = 452, X_B = 540;
+function armY() { return rowY(10) + 30; }
 
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
@@ -723,16 +737,17 @@ var gi = -1;
 for (var i = 0; i < BRANCHES.length; i++) if (BRANCHES[i].id === gearId) gi = i;
 var s = '';
 
+var ay = armY();
 var armOn = gi >= 0;
-s += '<circle cx="' + X_ARM + '" cy="' + rowY(5) + '" r="6" fill="' + (armOn ? HI : LO) + '"/>';
-s += '<text x="' + (X_ARM + 42) + '" y="' + (rowY(5) + 40) + '" fill="' + GREY + '" font-size="11" font-weight="700" text-anchor="middle">开关 K</text>';
+s += '<circle cx="' + X_ARM + '" cy="' + ay + '" r="6" fill="' + (armOn ? HI : LO) + '"/>';
+s += '<text x="' + X_ARM + '" y="' + (ay + 20) + '" fill="' + GREY + '" font-size="11" font-weight="700" text-anchor="middle">开关 K</text>';
 if (armOn) {
-s += '<path d="M' + X_ARM + ' ' + rowY(5) + 'L' + (X_DOT - 4) + ' ' + rowY(gi) + '" stroke="' + HI + '" stroke-width="3.2" stroke-linecap="round"/>';
+s += '<path d="M' + X_ARM + ' ' + ay + 'L' + (X_DOT - 3) + ' ' + rowY(gi) + '" stroke="' + HI + '" stroke-width="3.4" stroke-linecap="round"/>';
 }
 
-s += '<circle cx="' + X_A + '" cy="' + rowY(5) + '" r="8" fill="#c0392b"/>';
-s += '<path d="M' + (X_A + 8) + ' ' + rowY(5) + 'H' + X_ARM + '" stroke="#c0392b" stroke-width="2.6"/>';
-s += '<text x="' + X_A + '" y="' + (rowY(5) + 24) + '" fill="#c0392b" font-size="15" font-weight="800" text-anchor="middle">A</text>';
+s += '<circle cx="' + X_A + '" cy="' + ay + '" r="8" fill="#c0392b"/>';
+s += '<path d="M' + (X_A + 8) + ' ' + ay + 'H' + X_ARM + '" stroke="#c0392b" stroke-width="2.6"/>';
+s += '<text x="' + (X_A - 2) + '" y="' + (ay + 22) + '" fill="#c0392b" font-size="15" font-weight="800" text-anchor="middle">A</text>';
 
 BRANCHES.forEach(function (b, k) {
 var y = rowY(k);
@@ -741,7 +756,8 @@ var col = on ? HI : LO;
 
 s += '<circle cx="' + X_DOT + '" cy="' + y + '" r="' + (on ? 7 : 5) + '" fill="' + (on ? HI : '#ffffff') + '" stroke="' + col + '" stroke-width="' + (on ? 0 : 1.6) + '"/>';
 
-s += '<text x="' + (X_DOT - 15) + '" y="' + (y + 4) + '" fill="' + (on ? HI : '#b0bec5') + '" font-size="11" font-weight="800" text-anchor="end">' + (k + 1) + '</text>';
+s += '<text x="' + (X_DOT - 16) + '" y="' + (y + 4) + '" fill="' + (on ? HI : '#b0bec5') + '" font-size="' + (on ? 12 : 11) + '" font-weight="' + (on ? 800 : 600) + '" text-anchor="end">' + (k + 1) + '</text>';
+s += '<text x="14" y="' + (y + 4) + '" fill="' + (on ? HI : '#c3ccd4') + '" font-size="' + (on ? 12 : 11) + '" font-weight="' + (on ? 800 : 600) + '">' + b.label + b.unit + '</text>';
 
 s += '<path d="M' + (X_DOT + 7) + ' ' + y + 'H' + X_RES0 + '" stroke="' + col + '" stroke-width="' + (on ? 2.4 : 1.2) + '"/>';
 
@@ -750,8 +766,6 @@ if (b.kind === 'R') s += ohmBox(X_RES0, X_RES1, y, on ? b.val : '', on);
 else s += res(X_RES0, X_RES1, y, txt, on ? b.val : '', on);
 
 s += '<path d="M' + (b.kind === 'R' ? X_RES1 : X_RES1) + ' ' + y + 'H' + X_BUS + '" stroke="' + col + '" stroke-width="' + (on ? 2.4 : 1.2) + '"/>';
-
-s += '<text x="6" y="' + (y + 4) + '" fill="' + (on ? HI : '#c3ccd4') + '" font-size="' + (on ? 12.5 : 11) + '" font-weight="' + (on ? 800 : 600) + '">' + b.label + b.unit + '</text>';
 });
 
 s += '<path d="M' + X_BUS + ' ' + rowY(0) + 'V' + rowY(10) + '" stroke="' + (gi >= 0 ? HI : LO) + '" stroke-width="' + (gi >= 0 ? 2.6 : 1.4) + '"/>';
@@ -1512,11 +1526,41 @@ $('btnTest').addEventListener('click', function () {
 var r = P.runSelfTest();
 alert('物理自检：' + (r.pass ? '全部通过' : r.fail + ' 项失败') + '\n用例 ' + r.total + ' 条');
 });
+$('btnFull').addEventListener('click', function () {
+var d = document.documentElement;
+if (!document.fullscreenElement) {
+if (d.requestFullscreen) d.requestFullscreen();
+} else if (document.exitFullscreen) document.exitFullscreen();
+});
+
+document.addEventListener('keydown', function (e) {
+var order = P.GEAR_ORDER;
+var i = order.indexOf(S.gear);
+if (e.key === 'ArrowRight') {
+i = (i < 0) ? 0 : Math.min(order.length - 1, i + 1);
+pickGear(order[i]); e.preventDefault();
+} else if (e.key === 'ArrowLeft') {
+i = (i < 0) ? 0 : Math.max(0, i - 1);
+pickGear(order[i]); e.preventDefault();
+} else if (e.key >= '1' && e.key <= '8') {
+freeMode = false;
+taskIdx = parseInt(e.key, 10) - 1;
+$('btnFree').textContent = '自由练习';
+applyTask(); e.preventDefault();
+}
+});
 
 NS.BENCH.setZeroKnobs((S.offGrid + 3) / 6, (S.kOhm - 0.85) / 0.35);
 NS.BENCH.rebindZero($('zeroBox'), zeroCb());
 markScene();
 applyTask();
+
+setTimeout(function () {
+var db = $('dialBox');
+if (db && db.scrollWidth > db.clientWidth + 4) {
+db.scrollLeft = (db.scrollWidth - db.clientWidth) / 2;
+}
+}, 420);
 window.__mm6 = { state: S, ctx: ctx, render: render, selftest: P.runSelfTest, setTask: function (i) { taskIdx = i; applyTask(); } };
 window.__viz = { selfTest: function () { return P.runSelfTest(); } };
 }
